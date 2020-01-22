@@ -41,7 +41,6 @@ public class MonitoringActivity extends Activity  {
 		setContentView(R.layout.activity_monitoring);
 		verifyBluetooth();
 
-
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 					== PackageManager.PERMISSION_GRANTED) {
@@ -71,11 +70,9 @@ public class MonitoringActivity extends Activity  {
 							builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons in the background.  Please go to Settings -> Applications -> Permissions and grant background location access to this app.");
 							builder.setPositiveButton(android.R.string.ok, null);
 							builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
 								@Override
 								public void onDismiss(DialogInterface dialog) {
 								}
-
 							});
 							builder.show();
 						}
@@ -93,15 +90,12 @@ public class MonitoringActivity extends Activity  {
 					builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons.  Please go to Settings -> Applications -> Permissions and grant location access to this app.");
 					builder.setPositiveButton(android.R.string.ok, null);
 					builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
 						@Override
 						public void onDismiss(DialogInterface dialog) {
 						}
-
 					});
 					builder.show();
 				}
-
 			}
 		}
 	}
@@ -119,11 +113,9 @@ public class MonitoringActivity extends Activity  {
 					builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons.");
 					builder.setPositiveButton(android.R.string.ok, null);
 					builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
 						@Override
 						public void onDismiss(DialogInterface dialog) {
 						}
-
 					});
 					builder.show();
 				}
@@ -138,11 +130,9 @@ public class MonitoringActivity extends Activity  {
 					builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons when in the background.");
 					builder.setPositiveButton(android.R.string.ok, null);
 					builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
 						@Override
 						public void onDismiss(DialogInterface dialog) {
 						}
-
 					});
 					builder.show();
 				}
@@ -160,8 +150,7 @@ public class MonitoringActivity extends Activity  {
 		if (BeaconManager.getInstanceForApplication(this).getMonitoredRegions().size() > 0) {
 			application.disableMonitoring();
 			((Button)findViewById(R.id.enableButton)).setText("Re-Enable Monitoring");
-		}
-		else {
+		} else {
 			((Button)findViewById(R.id.enableButton)).setText("Disable Monitoring");
 			application.enableMonitoring();
 		}
@@ -183,7 +172,6 @@ public class MonitoringActivity extends Activity  {
     }
 
 	private void verifyBluetooth() {
-
 		try {
 			if (!BeaconManager.getInstanceForApplication(this).checkAvailability()) {
 				final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -215,9 +203,7 @@ public class MonitoringActivity extends Activity  {
 
 			});
 			builder.show();
-
 		}
-
 	}
 
     public void updateLog(final String log) {
@@ -229,5 +215,4 @@ public class MonitoringActivity extends Activity  {
     	    }
     	});
     }
-
 }

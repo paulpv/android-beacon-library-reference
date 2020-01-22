@@ -31,6 +31,8 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         super.onCreate();
         BeaconManager beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
 
+        BeaconManager.setDebug(true);
+
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
         // advertisement with a line like below.  The example shows how to find a beacon with the
@@ -42,8 +44,6 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         //beaconManager.getBeaconParsers().add(new BeaconParser().
         //        setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
 
-        beaconManager.setDebug(true);
-
 
         // Uncomment the code below to use a foreground service to scan for beacons. This unlocks
         // the ability to continually scan for long periods of time in the background on Andorid 8+
@@ -51,7 +51,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         // communicate to users that your app is using resources in the background.
         //
 
-        /*
+        if (true) {
         Notification.Builder builder = new Notification.Builder(this);
         builder.setSmallIcon(R.drawable.ic_launcher);
         builder.setContentTitle("Scanning for Beacons");
@@ -78,7 +78,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         beaconManager.setEnableScheduledScanJobs(false);
         beaconManager.setBackgroundBetweenScanPeriod(0);
         beaconManager.setBackgroundScanPeriod(1100);
-        */
+        }
 
         Log.d(TAG, "setting up background monitoring for beacons and power saving");
         // wake up the app when a beacon is seen
@@ -138,8 +138,6 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
                 sendNotification();
             }
         }
-
-
     }
 
     @Override
@@ -156,7 +154,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
                         .setContentTitle("Beacon Reference Application")
-                        .setContentText("An beacon is nearby.")
+                        .setContentText("A beacon is nearby.")
                         .setSmallIcon(R.drawable.ic_launcher);
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -186,5 +184,4 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     public String getLog() {
         return cumulativeLog;
     }
-
 }
