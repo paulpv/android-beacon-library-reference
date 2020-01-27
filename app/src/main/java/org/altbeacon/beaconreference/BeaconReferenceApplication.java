@@ -103,12 +103,26 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     private MonitoringActivity monitoringActivity = null;
     private String cumulativeLog = "";
 
+    private BluetoothAdapterStateBroadcastReceiver bluetoothAdapterStateBroadcastReceiver;
+
     public void onCreate() {
         super.onCreate();
 
-        BeaconManager.setDebug(true);
+        //BeaconManager.setDebug(true);
 
         beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
+
+        beaconManager.setNonBeaconLeScanCallback(new NonBeaconLeScanCallback() {
+            @Override
+            public void onNonBeaconLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                BeaconReferenceApplication.this.onNonBeaconLeScan(device, rssi, scanRecord);
+            }
+        });
+
+        beaconManager.setForegroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_SCAN_PERIOD);
+        beaconManager.setForegroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD);
+        beaconManager.setBackgroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
+        beaconManager.setBackgroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
@@ -193,6 +207,9 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         regionBootstrap = new RegionBootstrap(this, region);
     }
 
+    public void onNonBeaconLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+        Log.e(TAG, "onNonBeaconLeScan: device=" + device + ", rssi=" + rssi + ", scanRecord=" + BeaconParser.byteArrayToString(scanRecord));
+    }
 
     @Override
     public void didEnterRegion(Region arg0) {
