@@ -10,10 +10,11 @@ import android.content.IntentFilter;
 public class BluetoothAdapterStateBroadcastReceiver
         extends BroadcastReceiver {
 
-    private static final String TAG = "BluetoothAdapterStateBroadcastReceiver";
+    private static final String TAG = Utils.TAG(BluetoothAdapterStateBroadcastReceiver.class);
 
     interface Callbacks {
         void onBluetoothAdapterEnabled();
+
         void onBluetoothAdapterDisabled();
     }
 
