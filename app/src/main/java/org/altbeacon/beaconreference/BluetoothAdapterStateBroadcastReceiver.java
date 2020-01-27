@@ -25,7 +25,7 @@ public class BluetoothAdapterStateBroadcastReceiver
     private Callbacks callbacks;
     private boolean isStarted;
 
-    private int     previousBluetoothAdapterState;
+    private int previousBluetoothAdapterState;
     private boolean previousBluetoothAdapterEnabled;
 
     public BluetoothAdapterStateBroadcastReceiver(Context context) {

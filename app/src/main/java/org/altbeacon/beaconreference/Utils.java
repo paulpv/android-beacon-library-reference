@@ -6,10 +6,12 @@ public class Utils {
     private Utils() {
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String TAG(Object o) {
         return TAG((o == null) ? null : o.getClass());
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static String TAG(Class c) {
         return TAG(getShortClassName(c));
     }
@@ -17,6 +19,7 @@ public class Utils {
     /**
      * Per http://developer.android.com/reference/android/util/Log.html#isLoggable(java.lang.String, int)
      */
+    @SuppressWarnings("WeakerAccess")
     public static int LOG_TAG_LENGTH_LIMIT = 23;
 
     /**
@@ -25,6 +28,7 @@ public class Utils {
      * @param tag
      * @return the tag limited to {@link #LOG_TAG_LENGTH_LIMIT}
      */
+    @SuppressWarnings("WeakerAccess")
     public static String TAG(String tag) {
         int length = tag.length();
         if (length > LOG_TAG_LENGTH_LIMIT) {
@@ -35,12 +39,13 @@ public class Utils {
         return tag;
     }
 
-    @Nullable
     @SuppressWarnings("WeakerAccess")
+    @Nullable
     public static String getShortClassName(Object o) {
         return getShortClassName(o == null ? null : o.getClass());
     }
 
+    @SuppressWarnings("WeakerAccess")
     @Nullable
     public static String getShortClassName(Class c) {
         return c == null ? null : c.getSimpleName();
