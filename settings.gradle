@@ -1,4 +1,6 @@
 
+include ':android-beacon-library'
+project(':android-beacon-library').projectDir = new File('../android-beacon-library/lib/')
 //include ':android-beacon-library:lib'
 
 include ':app'

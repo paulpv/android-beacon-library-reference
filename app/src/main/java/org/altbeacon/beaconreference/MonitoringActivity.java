@@ -2,27 +2,19 @@ package org.altbeacon.beaconreference;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.RemoteException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
-import org.altbeacon.beacon.MonitorNotifier;
-import org.altbeacon.beacon.Region;
-
-import java.util.Collection;
 
 /**
  *
@@ -34,12 +26,24 @@ public class MonitoringActivity extends Activity  {
 	private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 	private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
 
+	private BluetoothAdapterStateBroadcastReceiver bluetoothAdapterStateBroadcastReceiver;
+
+	private boolean isMonitoring() {
+	    return BeaconManager.getInstanceForApplication(this).getMonitoredRegions().size() > 0;
+    }
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_monitoring);
 		verifyBluetooth();
+
+		if (isMonitoring()) {
+			((Button) findViewById(R.id.enableButton)).setText("Disable Monitoring");
+		} else {
+			((Button)findViewById(R.id.enableButton)).setText("Enable Monitoring");
+		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -98,11 +102,25 @@ public class MonitoringActivity extends Activity  {
 				}
 			}
 		}
+
+		if (savedInstanceState == null) {
+		    bluetoothAdapterStateBroadcastReceiver = new BluetoothAdapterStateBroadcastReceiver(this);
+		    bluetoothAdapterStateBroadcastReceiver.start(new BluetoothAdapterStateBroadcastReceiver.Callbacks() {
+                @Override
+                public void onBluetoothAdapterEnabled() {
+                    BeaconReferenceApplication.updateNotification(getApplicationContext());
+                }
+
+                @Override
+                public void onBluetoothAdapterDisabled() {
+                    BeaconReferenceApplication.updateNotification(getApplicationContext());
+                }
+            });
+        }
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode,
-										   String permissions[], int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 		switch (requestCode) {
 			case PERMISSION_REQUEST_FINE_LOCATION: {
 				if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -119,7 +137,6 @@ public class MonitoringActivity extends Activity  {
 					});
 					builder.show();
 				}
-				return;
 			}
 			case PERMISSION_REQUEST_BACKGROUND_LOCATION: {
 				if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -136,7 +153,6 @@ public class MonitoringActivity extends Activity  {
 					});
 					builder.show();
 				}
-				return;
 			}
 		}
 	}
@@ -145,16 +161,16 @@ public class MonitoringActivity extends Activity  {
 		Intent myIntent = new Intent(this, RangingActivity.class);
 		this.startActivity(myIntent);
 	}
+
 	public void onEnableClicked(View view) {
 		BeaconReferenceApplication application = ((BeaconReferenceApplication) this.getApplicationContext());
-		if (BeaconManager.getInstanceForApplication(this).getMonitoredRegions().size() > 0) {
+		if (isMonitoring()) {
 			application.disableMonitoring();
-			((Button)findViewById(R.id.enableButton)).setText("Re-Enable Monitoring");
+			((Button)findViewById(R.id.enableButton)).setText("Enable Monitoring");
 		} else {
 			((Button)findViewById(R.id.enableButton)).setText("Disable Monitoring");
 			application.enableMonitoring();
 		}
-
 	}
 
     @Override
