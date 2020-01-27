@@ -87,9 +87,9 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
 
     public static void updateNotification(Context context) {
         String text = getNotificationText(context);
-        Notification notification = BeaconReferenceApplication.makeNotification(context, text);
-        NotificationManager notificationManager = BeaconReferenceApplication.getNotificationManager(context);
-        notificationManager.notify(BeaconReferenceApplication.FOREGROUND_NOTIFICATION_ID, notification);
+        Notification notification = makeNotification(context, text);
+        NotificationManager notificationManager = getNotificationManager(context);
+        notificationManager.notify(FOREGROUND_NOTIFICATION_ID, notification);
     }
 
     public static String getNotificationText(Context context) {
@@ -166,12 +166,29 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     }
 
     public void disableMonitoring() {
+        if (bluetoothAdapterStateBroadcastReceiver != null) {
+            bluetoothAdapterStateBroadcastReceiver.stop();
+            bluetoothAdapterStateBroadcastReceiver = null;
+        }
         if (regionBootstrap != null) {
             regionBootstrap.disable();
             regionBootstrap = null;
         }
     }
     public void enableMonitoring() {
+        bluetoothAdapterStateBroadcastReceiver = new BluetoothAdapterStateBroadcastReceiver(this);
+        bluetoothAdapterStateBroadcastReceiver.start(new BluetoothAdapterStateBroadcastReceiver.Callbacks() {
+            @Override
+            public void onBluetoothAdapterEnabled() {
+                updateNotification(getApplicationContext());
+            }
+
+            @Override
+            public void onBluetoothAdapterDisabled() {
+                updateNotification(getApplicationContext());
+            }
+        });
+
         Region region = new Region("backgroundRegion", null, null, null);
         regionBootstrap = new RegionBootstrap(this, region);
     }
@@ -184,9 +201,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         Log.d(TAG, "did enter region.");
         if (!haveDetectedBeaconsSinceBoot) {
             Log.d(TAG, "auto launching MainActivity");
-
-            // The very first time since boot that we detect an beacon, we launch the
-            // MainActivity
+            // The very first time since boot that we detect an beacon, we launch the MainActivity
             Intent intent = new Intent(this, MonitoringActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             // Important:  make sure to add android:launchMode="singleInstance" in the manifest
@@ -220,7 +235,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
 
     private void sendNotification() {
         NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
+                new NotificationCompat.Builder(this, "channelId")
                         .setContentTitle("Beacon Reference Application")
                         .setContentText("A beacon is nearby.")
                         .setSmallIcon(R.drawable.ic_launcher);

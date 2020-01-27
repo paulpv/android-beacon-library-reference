@@ -26,11 +26,7 @@ public class MonitoringActivity extends Activity  {
 	private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 	private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
 
-	private BluetoothAdapterStateBroadcastReceiver bluetoothAdapterStateBroadcastReceiver;
-
-	private boolean isMonitoring() {
-	    return BeaconManager.getInstanceForApplication(this).getMonitoredRegions().size() > 0;
-    }
+    private BeaconReferenceApplication beaconReferenceApplication;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +35,9 @@ public class MonitoringActivity extends Activity  {
 		setContentView(R.layout.activity_monitoring);
 		verifyBluetooth();
 
-		if (isMonitoring()) {
+        beaconReferenceApplication = (BeaconReferenceApplication) getApplication();
+
+		if (beaconReferenceApplication.isMonitoring()) {
 			((Button) findViewById(R.id.enableButton)).setText("Disable Monitoring");
 		} else {
 			((Button)findViewById(R.id.enableButton)).setText("Enable Monitoring");
@@ -102,21 +100,6 @@ public class MonitoringActivity extends Activity  {
 				}
 			}
 		}
-
-		if (savedInstanceState == null) {
-		    bluetoothAdapterStateBroadcastReceiver = new BluetoothAdapterStateBroadcastReceiver(this);
-		    bluetoothAdapterStateBroadcastReceiver.start(new BluetoothAdapterStateBroadcastReceiver.Callbacks() {
-                @Override
-                public void onBluetoothAdapterEnabled() {
-                    BeaconReferenceApplication.updateNotification(getApplicationContext());
-                }
-
-                @Override
-                public void onBluetoothAdapterDisabled() {
-                    BeaconReferenceApplication.updateNotification(getApplicationContext());
-                }
-            });
-        }
 	}
 
 	@Override
@@ -163,28 +146,26 @@ public class MonitoringActivity extends Activity  {
 	}
 
 	public void onEnableClicked(View view) {
-		BeaconReferenceApplication application = ((BeaconReferenceApplication) this.getApplicationContext());
-		if (isMonitoring()) {
-			application.disableMonitoring();
+		if (beaconReferenceApplication.isMonitoring()) {
+            beaconReferenceApplication.disableMonitoring();
 			((Button)findViewById(R.id.enableButton)).setText("Enable Monitoring");
 		} else {
 			((Button)findViewById(R.id.enableButton)).setText("Disable Monitoring");
-			application.enableMonitoring();
+            beaconReferenceApplication.enableMonitoring();
 		}
 	}
 
     @Override
     public void onResume() {
         super.onResume();
-        BeaconReferenceApplication application = ((BeaconReferenceApplication) this.getApplicationContext());
-        application.setMonitoringActivity(this);
-        updateLog(application.getLog());
+        beaconReferenceApplication.setMonitoringActivity(this);
+        updateLog(beaconReferenceApplication.getLog());
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        ((BeaconReferenceApplication) this.getApplicationContext()).setMonitoringActivity(null);
+        beaconReferenceApplication.setMonitoringActivity(null);
     }
 
 	private void verifyBluetooth() {
