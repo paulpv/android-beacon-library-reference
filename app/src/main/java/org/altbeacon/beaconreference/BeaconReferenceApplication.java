@@ -6,9 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -32,41 +30,6 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
 
     public static final int FOREGROUND_NOTIFICATION_ID = 456;
 
-    public static NotificationManager getNotificationManager(Context context) {
-        return (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-    }
-
-    public static BluetoothManager getBluetoothManager(Context context) {
-        return (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-    }
-
-    public static BluetoothAdapter getBluetoothAdapter(Context context) {
-        return getBluetoothManager(context).getAdapter();
-    }
-
-    /**
-     * @return {@link BluetoothAdapter#STATE_OFF}, {@link BluetoothAdapter#STATE_TURNING_ON}, {@link
-     * BluetoothAdapter#STATE_ON}, {@link BluetoothAdapter#STATE_TURNING_OFF}, or -1 if Bluetooth is not supported
-     */
-    public static int getBluetoothAdapterState(BluetoothAdapter bluetoothAdapter) {
-        try {
-            // TODO:(pv) Known to sometimes throw DeadObjectException
-            //  https://code.google.com/p/android/issues/detail?id=67272
-            //  https://github.com/RadiusNetworks/android-ibeacon-service/issues/16
-            return bluetoothAdapter != null ? bluetoothAdapter.getState() : -1;
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
-    public static boolean isBluetoothAdapterEnabled(Context context) {
-        return getBluetoothAdapterState(getBluetoothAdapter(context)) == BluetoothAdapter.STATE_ON;
-    }
-
-    public static boolean isBluetoothAdapterEnabled(BluetoothAdapter bluetoothAdapter) {
-        return getBluetoothAdapterState(bluetoothAdapter) == BluetoothAdapter.STATE_ON;
-    }
-
     public static Notification makeNotification(Context context, String text) {
         Notification.Builder builder = new Notification.Builder(context);
         builder.setSmallIcon(R.drawable.ic_launcher);
@@ -78,7 +41,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("My Notification Channel ID", "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT);
             channel.setDescription("My Notification Channel Description");
-            NotificationManager notificationManager = getNotificationManager(context);
+            NotificationManager notificationManager = Utils.getNotificationManager(context);
             notificationManager.createNotificationChannel(channel);
             builder.setChannelId(channel.getId());
         }
@@ -88,12 +51,12 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     public static void updateNotification(Context context) {
         String text = getNotificationText(context);
         Notification notification = makeNotification(context, text);
-        NotificationManager notificationManager = getNotificationManager(context);
+        NotificationManager notificationManager = Utils.getNotificationManager(context);
         notificationManager.notify(FOREGROUND_NOTIFICATION_ID, notification);
     }
 
     public static String getNotificationText(Context context) {
-        return isBluetoothAdapterEnabled(context) ? "Scanning for Beacons" : "Waiting for Bluetooth";
+        return Utils.isBluetoothAdapterEnabled(context) ? "Scanning for Beacons" : "Waiting for Bluetooth";
     }
 
     private BeaconManager beaconManager;
@@ -119,10 +82,10 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
             }
         });
 
-        beaconManager.setForegroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_SCAN_PERIOD);
-        beaconManager.setForegroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD);
-        beaconManager.setBackgroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
-        beaconManager.setBackgroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
+        //beaconManager.setForegroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_SCAN_PERIOD);
+        //beaconManager.setForegroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD);
+        //beaconManager.setBackgroundScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
+        //beaconManager.setBackgroundBetweenScanPeriod(BeaconManager.DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD * 2);
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
@@ -151,20 +114,20 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         // JobScheduler-based scans (used on Android 8+) and set a fast background scan
         // cycle that would otherwise be disallowed by the operating system.
         //
-            //beaconManager.setEnableScheduledScanJobs(false); // Unnecessary; already called w/ false by enableForegroundServiceScanning
+            //beaconManager.setEnableScheduledScanJobs(false); // Unnecessary; Already called w/ false by enableForegroundServiceScanning
         beaconManager.setBackgroundBetweenScanPeriod(0);
         beaconManager.setBackgroundScanPeriod(1100);
+        }
+
+        if (isMonitoring()) {
+            Log.d(TAG, "setting up background monitoring for beacons and power saving");
+            enableMonitoring();
         }
 
         // simply constructing this class and holding a reference to it in your custom Application
         // class will automatically cause the BeaconLibrary to save battery whenever the application
         // is not visible.  This reduces bluetooth power usage by about 60%
         backgroundPowerSaver = new BackgroundPowerSaver(this);
-
-        if (isMonitoring()) {
-            Log.d(TAG, "setting up background monitoring for beacons and power saving");
-            enableMonitoring();
-        }
 
         // If you wish to test beacon detection in the Android Emulator, you can use code like this:
         // BeaconManager.setBeaconSimulator(new TimedBeaconSimulator() );

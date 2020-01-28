@@ -1,5 +1,10 @@
 package org.altbeacon.beaconreference;
 
+import android.app.NotificationManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+
 import androidx.annotation.Nullable;
 
 public class Utils {
@@ -49,5 +54,40 @@ public class Utils {
     @Nullable
     public static String getShortClassName(Class c) {
         return c == null ? null : c.getSimpleName();
+    }
+
+    public static NotificationManager getNotificationManager(Context context) {
+        return (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    }
+
+    public static BluetoothManager getBluetoothManager(Context context) {
+        return (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+    }
+
+    public static BluetoothAdapter getBluetoothAdapter(Context context) {
+        return getBluetoothManager(context).getAdapter();
+    }
+
+    /**
+     * @return {@link BluetoothAdapter#STATE_OFF}, {@link BluetoothAdapter#STATE_TURNING_ON}, {@link
+     * BluetoothAdapter#STATE_ON}, {@link BluetoothAdapter#STATE_TURNING_OFF}, or -1 if Bluetooth is not supported
+     */
+    public static int getBluetoothAdapterState(BluetoothAdapter bluetoothAdapter) {
+        try {
+            // TODO:(pv) Known to sometimes throw DeadObjectException
+            //  https://code.google.com/p/android/issues/detail?id=67272
+            //  https://github.com/RadiusNetworks/android-ibeacon-service/issues/16
+            return bluetoothAdapter != null ? bluetoothAdapter.getState() : -1;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    public static boolean isBluetoothAdapterEnabled(Context context) {
+        return getBluetoothAdapterState(getBluetoothAdapter(context)) == BluetoothAdapter.STATE_ON;
+    }
+
+    public static boolean isBluetoothAdapterEnabled(BluetoothAdapter bluetoothAdapter) {
+        return getBluetoothAdapterState(bluetoothAdapter) == BluetoothAdapter.STATE_ON;
     }
 }
