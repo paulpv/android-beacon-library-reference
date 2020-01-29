@@ -22,6 +22,8 @@ import org.altbeacon.beacon.service.scanner.NonBeaconLeScanCallback;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.util.List;
+
 /**
  * Created by dyoung on 12/13/13.
  */
@@ -98,6 +100,8 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         //beaconManager.getBeaconParsers().add(new BeaconParser().
         //        setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
 
+        List<BeaconParser> beaconParsers = beaconManager.getBeaconParsers();
+        beaconParsers.clear(); // For testing purposes I currently don't care about the default AltBeacon beacons
 
         // Uncomment the code below to use a foreground service to scan for beacons. This unlocks
         // the ability to continually scan for long periods of time in the background on Andorid 8+
@@ -115,8 +119,8 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
         // cycle that would otherwise be disallowed by the operating system.
         //
             //beaconManager.setEnableScheduledScanJobs(false); // Unnecessary; Already called w/ false by enableForegroundServiceScanning
-        beaconManager.setBackgroundBetweenScanPeriod(0);
-        beaconManager.setBackgroundScanPeriod(1100);
+            beaconManager.setBackgroundBetweenScanPeriod(6200);
+            beaconManager.setBackgroundScanPeriod(6200);
         }
 
         if (isMonitoring()) {
