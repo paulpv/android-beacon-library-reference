@@ -7,8 +7,26 @@ import android.content.Context;
 
 import androidx.annotation.Nullable;
 
+import org.altbeacon.beacon.MonitorNotifier;
+
 public class Utils {
     private Utils() {
+    }
+
+    public static String monitorNotifierStateToString(int state) {
+        String s = "";
+        switch (state) {
+            case MonitorNotifier.INSIDE:
+                s = "INSIDE";
+                break;
+            case MonitorNotifier.OUTSIDE:
+                s = "OUTSIDE";
+                break;
+            default:
+                s = "UNKNOWN";
+                break;
+        }
+        return s + "(" + state + ")";
     }
 
     @SuppressWarnings("WeakerAccess")

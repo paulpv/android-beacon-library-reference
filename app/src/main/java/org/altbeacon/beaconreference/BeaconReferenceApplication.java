@@ -10,24 +10,31 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import com.pebblebee.bluetooth.Finder2BeaconParser;
+
+import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.altbeacon.beacon.logging.LogManager;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.service.scanner.NonBeaconLeScanCallback;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Created by dyoung on 12/13/13.
  */
-public class BeaconReferenceApplication extends Application implements BootstrapNotifier {
+public class BeaconReferenceApplication extends Application implements BootstrapNotifier, RangeNotifier {
     private static final String TAG = "BeaconReferenceApp";
 
     public static final int FOREGROUND_NOTIFICATION_ID = 456;
@@ -64,7 +71,6 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     private BeaconManager beaconManager;
     private RegionBootstrap regionBootstrap;
     private BackgroundPowerSaver backgroundPowerSaver;
-    private boolean haveDetectedBeaconsSinceBoot = false;
     private MonitoringActivity monitoringActivity = null;
     private String cumulativeLog = "";
 
@@ -102,6 +108,7 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
 
         List<BeaconParser> beaconParsers = beaconManager.getBeaconParsers();
         beaconParsers.clear(); // For testing purposes I currently don't care about the default AltBeacon beacons
+        beaconParsers.add(new Finder2BeaconParser());
 
         // Uncomment the code below to use a foreground service to scan for beacons. This unlocks
         // the ability to continually scan for long periods of time in the background on Andorid 8+
@@ -123,15 +130,15 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
             beaconManager.setBackgroundScanPeriod(6200);
         }
 
-        if (isMonitoring()) {
-            Log.d(TAG, "setting up background monitoring for beacons and power saving");
-            enableMonitoring();
-        }
-
         // simply constructing this class and holding a reference to it in your custom Application
         // class will automatically cause the BeaconLibrary to save battery whenever the application
         // is not visible.  This reduces bluetooth power usage by about 60%
         backgroundPowerSaver = new BackgroundPowerSaver(this);
+
+        if (isMonitoring()) {
+            Log.d(TAG, "setting up background monitoring for beacons and power saving");
+            enableMonitoring();
+        }
 
         // If you wish to test beacon detection in the Android Emulator, you can use code like this:
         // BeaconManager.setBeaconSimulator(new TimedBeaconSimulator() );
@@ -179,10 +186,11 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
     }
 
     @Override
-    public void didEnterRegion(Region arg0) {
+    public void didEnterRegion(Region region) {
         // In this example, this class sends a notification to the user whenever a Beacon
         // matching a Region (defined above) are first seen.
-        Log.d(TAG, "did enter region.");
+        Log.e(TAG, "#REGION didEnterRegion(" + region + ")");
+        /*
         if (!haveDetectedBeaconsSinceBoot) {
             Log.d(TAG, "auto launching MainActivity");
             // The very first time since boot that we detect an beacon, we launch the MainActivity
@@ -191,13 +199,12 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
             // Important:  make sure to add android:launchMode="singleInstance" in the manifest
             // to keep multiple copies of this activity from getting created if the user has
             // already manually launched the app.
-            this.startActivity(intent);
+            startActivity(intent);
             haveDetectedBeaconsSinceBoot = true;
         } else {
             if (monitoringActivity != null) {
-                // If the Monitoring Activity is visible, we log info about the beacons we have
-                // seen on its display
-                logToDisplay("I see a beacon again" );
+                // If the Monitoring Activity is visible, we log info about the beacons we have seen on its display
+                //logToDisplay("I see a beacon again" );
             } else {
                 // If we have already seen beacons before, but the monitoring activity is not in
                 // the foreground, we send a notification to the user on subsequent detections.
@@ -205,16 +212,42 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
                 sendNotification();
             }
         }
+        */
+        try {
+            Log.e(TAG, "#REGION addRangeNotifier/startRangingBeaconsInRegion");
+            beaconManager.addRangeNotifier(this);
+            beaconManager.startRangingBeaconsInRegion(region);
+        } catch (RemoteException e) {
+            Log.e(TAG, "#REGION addRangeNotifier/startRangingBeaconsInRegion", e);
+        }
     }
 
     @Override
     public void didExitRegion(Region region) {
-        logToDisplay("I no longer see a beacon.");
+        Log.e(TAG, "#REGION didExitRegion(" + region + ")");
+        try {
+            Log.e(TAG, "#REGION stopRangingBeaconsInRegion/removeRangeNotifier");
+            beaconManager.stopRangingBeaconsInRegion(region);
+            beaconManager.removeRangeNotifier(this);
+        } catch (RemoteException e) {
+            Log.e(TAG, "#REGION stopRangingBeaconsInRegion/removeRangeNotifier", e);
+        }
+        //logToDisplay("I no longer see a beacon.");
     }
 
     @Override
     public void didDetermineStateForRegion(int state, Region region) {
-        logToDisplay("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
+        String stateString = Utils.monitorNotifierStateToString(state);
+        Log.e(TAG, "#REGION didDetermineStateForRegion(" + stateString + ", " + region + ")");
+        //logToDisplay("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
+    }
+
+    @Override
+    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        Log.e(TAG, "#REGION didRangeBeaconsInRegion(beacons=" + beacons + ", region=" + region + ")");
+        for (Beacon beacon : beacons) {
+            Log.e(TAG, "#REGION didRangeBeaconsInRegion: beacon=" + beacon + ": rssi=" + beacon.getRunningAverageRssi());
+        }
     }
 
     private void sendNotification() {
@@ -233,11 +266,12 @@ public class BeaconReferenceApplication extends Application implements Bootstrap
                 );
         builder.setContentIntent(resultPendingIntent);
         NotificationManager notificationManager =
-                (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, builder.build());
     }
 
     public void setMonitoringActivity(MonitoringActivity activity) {
+        LogManager.i(TAG, "Setting monitoringActivity = " + activity);
         this.monitoringActivity = activity;
     }
 
